@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 400 240">
+  <rect width="400" height="240" fill="#fff7f7"/>
+  <g fill="#ffdede">
+    <rect x="20" y="20" width="360" height="120" rx="8"/>
+  </g>
+  <text x="50%" y="170" fill="#8b5e5e" font-size="18" font-family="Inter, Arial" text-anchor="middle">Image catégorie</text>
+</svg>

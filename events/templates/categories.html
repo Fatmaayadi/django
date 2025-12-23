@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="card">
+  <h2>Catégories</h2>
+  <p class="muted">Sélectionnez une catégorie pour découvrir des événements.</p>
+  <div id="categories" style="margin-top:14px">Chargement...</div>
+</section>
+
+<script>
+async function loadCategories(){
+  try{
+    const res = await fetch('/api/categories/');
+    if(!res.ok){ document.getElementById('categories').innerText = 'Aucune catégorie disponible.'; return }
+    const data = await res.json();
+    const ctn = document.getElementById('categories');
+    ctn.innerHTML = '';
+    data.forEach(cat => {
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.style.display = 'inline-block';
+      el.style.marginRight = '8px';
+      el.style.minWidth = '180px';
+      const imgSrc = cat.image || '/static/images/default-category.svg';
+      const imgHtml = `<img src="${imgSrc}" style="width:100%;height:110px;object-fit:cover;border-radius:6px;margin-bottom:8px" />`;
+      el.innerHTML = `${imgHtml}<h4>${cat.name}</h4><p class="muted">${cat.description || ''}</p><p><a href='/events/?category=${cat.id}'>Voir</a></p>`;
+      ctn.appendChild(el);
+    });
+  }catch(e){ document.getElementById('categories').innerText = 'Erreur lors du chargement.' }
+}
+loadCategories();
+</script>
+
+{% endblock %}

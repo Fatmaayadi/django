@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="auth-hero page-bg">
+  <div class="container text-center" style="color:rgba(255,255,255,0.95)">
+    <h1 style="color:#fff;margin:0;font-family:'Montserrat',sans-serif">Rejoignez Plateforme Events</h1>
+    <p style="color:rgba(255,255,255,0.9);margin-top:8px">Créez un compte pour réserver et gérer vos tickets.</p>
+  </div>
+</div>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2>Créer un compte</h2>
+    <p class="lead">Entrez vos informations pour commencer.</p>
+    <form id="registerForm">
+      <label class="form-field">Nom d'utilisateur
+        <input name="username" required placeholder="Votre nom d'utilisateur">
+      </label>
+      <label class="form-field">Email
+        <input name="email" type="email" placeholder="adresse@example.com">
+      </label>
+      <label class="form-field">Mot de passe
+        <input name="password" type="password" required placeholder="Choisissez un mot de passe">
+      </label>
+      <label class="form-field">Centres d'intérêt (séparés par virgule)
+        <input name="interests" placeholder="musique, sport, art">
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">S'inscrire</button>
+        <a href="/accounts/login/" class="btn-outline" style="text-decoration:none;padding:10px 12px;border-radius:10px">Déjà membre ?</a>
+      </div>
+      <div id="msg" style="margin-top:12px;color:var(--muted)"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.getElementById('registerForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const payload = {
+      username: f.username.value,
+      email: f.email.value,
+      password: f.password.value,
+      interests: f.interests.value ? f.interests.value.split(',').map(s=>s.trim()) : []
+    };
+    const res = await fetch('/api/users/register/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    const msg = document.getElementById('msg');
+    if(res.status === 201){
+      msg.style.color = 'green';
+      msg.innerText = "Inscription réussie. Vous pouvez vous connecter.";
+    } else {
+      msg.style.color = 'crimson';
+      msg.innerText = "Erreur: " + (data.detail || JSON.stringify(data));
+    }
+  }
+</script>
+
+{% endblock %}

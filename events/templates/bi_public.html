@@ -1,0 +1,241 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tableau de bord BI — Plateforme Events</title>
+  <link rel="stylesheet" href="{% static 'css/bi.css' %}">
+  <style>
+    /* Minimal override to ensure a clean white background when embedded */
+    body { background: #f9fafb; font-family: 'Inter', sans-serif; margin:0; padding:0; }
+    .main-content { max-width: 1100px; margin: 18px auto; padding: 10px; }
+  </style>
+</head>
+<body>
+  <div class="main-content">
+    <h1 class="dashboard-title">Tableau de bord BI</h1>
+
+    <!-- Top Row: 3 Cards Side by Side -->
+    <div class="top-cards-row">
+      <div class="top-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">📋</span> Project Task
+          </div>
+          <span class="progress-percent">23% Done</span>
+        </div>
+        <div class="card-value">6/10</div>
+        <div class="card-subtext">Complete Task</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 23%;"></div>
+        </div>
+        <div class="card-subtext">Project Team : 28 Persons</div>
+      </div>
+
+      <div class="top-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">📈</span> Sales Statistics
+          </div>
+        </div>
+        <div class="card-value">230,598</div>
+        <div class="card-subtext">Top selling items statistic by last month</div>
+      </div>
+
+      <div class="top-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">🎉</span> Upcoming Event
+          </div>
+          <span class="progress-percent">34%</span>
+        </div>
+        <div class="card-value">45</div>
+        <div class="card-subtext">Competitors</div>
+        <div class="card-subtext">You can participate in event</div>
+        <div class="calendar-icon">📅</div>
+      </div>
+    </div>
+
+    <!-- Middle Row: metrics + donut -->
+    <div class="middle-cards-row">
+      <div class="metric-card">
+        <div class="metric-header">
+          <div class="metric-title">Reply</div>
+        </div>
+        <div class="card-value">2.43 h</div>
+        <div class="card-subtext">AVERAGE TIME FOR FIRST REPLY</div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <div class="metric-title">Statistics</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="donutChart" class="chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <div class="user-list-card">
+        <div class="user-list-header">
+          <div class="user-list-title">Today</div>
+        </div>
+        <div class="user-list">
+          <div class="user-item">
+            <div class="user-info">
+              <div class="avatar">S</div>
+              <div>
+                <div class="user-name">Silje Larsen</div>
+                <div class="user-project">Project X</div>
+              </div>
+            </div>
+            <div class="user-stats">
+              <div class="user-value">3784</div>
+              <span class="trend-up">▲</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom: table -->
+      <!-- Compact BI grid: 4 small charts côte-à-côte -->
+      <div style="margin-top:18px;">
+        <div class="bi-grid" style="display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px;">
+          <div class="metric-card">
+            <div class="metric-header"><div class="metric-title">Occupancy</div></div>
+            <div class="chart-container"><canvas id="occupancyChart" class="chart-canvas small"></canvas></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header"><div class="metric-title">By Category</div></div>
+            <div class="chart-container"><canvas id="categoryChart" class="chart-canvas small"></canvas></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header"><div class="metric-title">Daily Revenue</div></div>
+            <div class="chart-container"><canvas id="dailyChart" class="chart-canvas small"></canvas></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header"><div class="metric-title">Top Events</div></div>
+            <div class="chart-container"><canvas id="topEventsChart" class="chart-canvas small"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">User Project List</div>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>USER</th>
+              <th>PROJECT</th>
+              <th>COMPLETED</th>
+              <th>STATUS</th>
+              <th>DATE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="avatar">T</div></td>
+              <td>
+                <div>Social Media App</div>
+                <div class="user-project">Assigned to Tristan Madsen</div>
+              </td>
+              <td>326,134</td>
+              <td><span class="status-badge status-green">68%</span></td>
+              <td>October 26, 2025</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Small helper to create/destroy Chart instances
+    let CHARTS = {};
+
+    function destroyChart(id) {
+      if (CHARTS[id]) {
+        try { CHARTS[id].destroy(); } catch (e) {}
+        CHARTS[id] = null;
+      }
+    }
+
+    function buildCharts(data) {
+      // occupancy: bar chart
+      const occLabels = data.occupancy.map(o => o.event);
+      const occValues = data.occupancy.map(o => o.sold);
+      const occCtx = document.getElementById('occupancyChart').getContext('2d');
+      destroyChart('occupancy');
+      CHARTS['occupancy'] = new Chart(occCtx, {
+        type: 'bar',
+        data: { labels: occLabels, datasets: [{ label:'Sold', data: occValues, backgroundColor:'#3b82f6' }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false}} }
+      });
+
+      // category: doughnut
+      const catLabels = data.sales_by_category.map(c => c.category);
+      const catValues = data.sales_by_category.map(c => c.count);
+      const catCtx = document.getElementById('categoryChart').getContext('2d');
+      destroyChart('category');
+      CHARTS['category'] = new Chart(catCtx, {
+        type: 'doughnut',
+        data: { labels: catLabels, datasets: [{ data: catValues, backgroundColor: ['#06b6d4','#ef4444','#10b981','#3b82f6','#8b5cf6'] }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:8,font:{size:10}}}} }
+      });
+
+      // daily: line
+      const dailyLabels = data.daily_sales.map(d => d.day);
+      const dailyValues = data.daily_sales.map(d => d.total);
+      const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+      destroyChart('daily');
+      CHARTS['daily'] = new Chart(dailyCtx, {
+        type: 'line',
+        data: { labels: dailyLabels, datasets: [{ label:'Revenue', data: dailyValues, fill:true, backgroundColor:'rgba(59,130,246,0.12)', borderColor:'#3b82f6', tension:0.2 }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}} }
+      });
+
+      // top events: horizontal bar (render as vertical small bar)
+      const topLabels = data.top_events.map(t => t.event);
+      const topValues = data.top_events.map(t => t.count);
+      const topCtx = document.getElementById('topEventsChart').getContext('2d');
+      destroyChart('topEvents');
+      CHARTS['topEvents'] = new Chart(topCtx, {
+        type: 'bar',
+        data: { labels: topLabels, datasets: [{ data: topValues, backgroundColor:'#10b981' }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}} }
+      });
+    }
+
+    async function fetchAndRender() {
+      try {
+        const resp = await fetch('{% url "bi-data-public" %}');
+        if (!resp.ok) throw new Error('Network error');
+        const data = await resp.json();
+        buildCharts(data);
+        // small donut fallback into main donut canvas
+        destroyChart('donut');
+        const donutCtx = document.getElementById('donutChart').getContext('2d');
+        CHARTS['donut'] = new Chart(donutCtx, {
+          type:'doughnut',
+          data:{ labels: data.sales_by_category.map(c=>c.category), datasets:[{ data: data.sales_by_category.map(c=>c.count), backgroundColor:['#06b6d4','#ef4444','#10b981','#3b82f6'] }] },
+          options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1, plugins:{legend:{display:false}}, cutout:'60%' }
+        });
+      } catch (e) {
+        console.error('Failed to load BI data', e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // ensure small canvases have limited height via style
+      document.querySelectorAll('.chart-canvas.small').forEach(c=>{ c.style.height='140px'; });
+      fetchAndRender();
+    });
+  </script>
+</body>
+</html>

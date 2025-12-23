@@ -1,0 +1,7 @@
+Django>=4.2
+djangorestframework
+Pillow
+qrcode
+django-cors-headers
+python-dotenv
+django-jazzmin>=2.0

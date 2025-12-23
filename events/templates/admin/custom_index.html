@@ -1,0 +1,73 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}{{ site_title|default:_("Django site admin") }}{% endblock %}
+
+{% block content %}
+  <link rel="stylesheet" href="{% static 'events/css/bi.css' %}">
+
+  <div class="dashboard-cards">
+    <div class="bi-card bi-card--compact" style="flex:1;">
+      <h3>Ventes par événement</h3>
+      <canvas id="ticketsChart" class="bi-canvas"></canvas>
+    </div>
+    <div class="bi-card bi-card--compact" style="flex:1;">
+      <h3>Revenu (6 derniers mois)</h3>
+      <canvas id="paymentsChart" class="bi-canvas"></canvas>
+    </div>
+  </div>
+
+  {% comment %} Render the usual app list below the charts {% endcomment %}
+  <div>
+    {% include "admin/app_list.html" %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    async function fetchStats(){
+      const res = await fetch('{% url "admin-stats-data" %}');
+      if(!res.ok) return;
+      const data = await res.json();
+
+      // Tickets chart
+      const ticketsLabels = data.tickets.map(t => t.event);
+      const ticketsValues = data.tickets.map(t => t.count);
+      const ctx1 = document.getElementById('ticketsChart').getContext('2d');
+      new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: ticketsLabels,
+          datasets: [{label: 'Tickets vendus', data: ticketsValues, backgroundColor: 'rgba(54,162,235,0.7)', maxBarThickness: 60}]
+        },
+        options: {
+          responsive:true,
+          maintainAspectRatio:true,
+          aspectRatio:2,
+          scales:{y:{beginAtZero:true}},
+          plugins:{legend:{display:false}}
+        }
+      });
+
+      // Payments chart
+      const payLabels = data.payments.map(p => p.month);
+      const payValues = data.payments.map(p => p.total);
+      const ctx2 = document.getElementById('paymentsChart').getContext('2d');
+      new Chart(ctx2, {
+        type: 'line',
+        data: {
+          labels: payLabels,
+          datasets: [{label: 'Revenue', data: payValues, borderColor: 'rgba(75,192,192,1)', backgroundColor:'rgba(75,192,192,0.2)', fill:true}]
+        },
+        options: {
+          responsive:true,
+          maintainAspectRatio:true,
+          aspectRatio:2,
+          plugins:{legend:{display:false}},
+          scales:{y:{beginAtZero:true}}
+        }
+      });
+    }
+    document.addEventListener('DOMContentLoaded', fetchStats);
+  </script>
+
+{% endblock %}

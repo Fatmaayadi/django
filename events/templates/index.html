@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero card">
+  <div class="hero-inner">
+    <h2>Événements à venir</h2>
+    <p class="muted">Découvrez et réservez des événements locaux adaptés à vos goûts.</p>
+  </div>
+</section>
+
+<section>
+  <div id="events" class="events-grid">Chargement...</div>
+</section>
+
+<script>
+async function fetchEvents(){
+  const res = await fetch('/api/events/');
+  const data = await res.json();
+  const container = document.getElementById('events');
+  container.innerHTML = '';
+  data.forEach(ev => {
+    const div = document.createElement('article');
+    div.className = 'card event-card';
+    div.innerHTML = `
+      <img src="${ev.image || '/static/images/default-event.svg'}" alt="${ev.title}">
+      <h3>${ev.title}</h3>
+      <p class="event-meta">${new Date(ev.date).toLocaleDateString()} • ${ev.location ? ev.location.name : 'En ligne'}</p>
+      <p class="muted">${ev.description ? ev.description.substring(0,120) : ''}...</p>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:space-between;align-items:center">
+        <div class="muted">Prix: ${ev.price ?? 'Gratuit'}</div>
+        <div>
+          <button onclick="openEvent(${ev.id})">Voir</button>
+        </div>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+function openEvent(id){ window.location.href = `/events/${id}/`; }
+fetchEvents();
+</script>
+{% endblock %}

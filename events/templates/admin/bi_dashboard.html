@@ -1,0 +1,985 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body {
+                  background-color: white; /* Ensure the iframe has a white background */
+                }
+
+                /* Masquer le menu latéral */
+.sidebar {
+  width: 250px;
+  background: #1f2937;
+  color: white;
+  overflow-y: auto;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+
+/* Masquer le menu latéral */
+.sidebar {
+  display: none !important;
+}
+
+/* Si vous voulez juste cacher le sidebar sur certaines pages, utilisez une classe spécifique */
+/* .bi-fullscreen-container .sidebar { display: none; } */
+
+
+              </style>
+                        </head>
+                        <body>
+                            {% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}{{ site_title|default:_("Django site admin") }}{% endblock %}
+
+{% block extrahead %}
+<style>
+  /* =========================
+     BI DASHBOARD + SIDEBAR
+     ========================= */
+
+  body {
+    background: #f9fafb;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Masquer le message de permission */
+  .django-admin-permission-message,
+  body > div:first-child p {
+    display: none !important;
+  }
+
+  /* Conteneur principal - layout en deux colonnes */
+  .dashboard-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  /* Sidebar - garder visible */
+  .sidebar {
+    width: 250px;
+    background: #1f2937;
+    color: white;
+    overflow-y: auto;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+  }
+
+  .sidebar h1 {
+    font-size: 18px;
+    padding: 16px 20px;
+    margin: 0;
+    border-bottom: 1px solid #374151;
+    background: #111827;
+  }
+
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .sidebar li {
+    padding: 12px 20px;
+    border-bottom: 1px solid #374151;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .sidebar li:hover {
+    background: #374151;
+  }
+
+  .sidebar a {
+    color: white;
+    text-decoration: none;
+    display: block;
+  }
+
+  /* Contenu principal - dashboard BI */
+  .main-content {
+    flex: 1;
+    margin-left: 250px;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f9fafb;
+  }
+
+  .dashboard-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #111827;
+  }
+
+  /* ====== Top Row: 3 Cards Side by Side ====== */
+  .top-cards-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .top-card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    flex: 1;
+    min-width: 280px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .top-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #3b82f6;
+  }
+
+  .card-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #111827;
+    margin: 8px 0;
+  }
+
+  .card-subtext {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #10b981;
+    border-radius: 3px;
+  }
+
+  .progress-percent {
+    font-size: 12px;
+    font-weight: 600;
+    color: #10b981;
+  }
+
+  .calendar-icon {
+    font-size: 24px;
+    color: #3b82f6;
+    margin-top: 8px;
+    text-align: right;
+  }
+
+  /* ====== Middle Row: Reply, Statistics, User List ====== */
+  .middle-cards-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .metric-card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s;
+  }
+
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  }
+
+  .metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .metric-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .chart-container {
+    flex: 1;
+    position: relative;
+  }
+
+  .chart-canvas {
+    width: 100%;
+    height: 100%;
+    max-height: 180px;
+  }
+
+  .stat-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .stat-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: #6b7280;
+    width: 50px;
+    text-align: right;
+  }
+
+  .stat-bar {
+    flex: 1;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+
+  .user-list-card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+  }
+
+  .user-list-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  }
+
+  .user-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .user-list-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .tab-nav {
+    display: flex;
+    gap: 8px;
+  }
+
+  .tab-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .tab-btn.active {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .tab-btn:not(.active) {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  .user-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .user-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+  }
+
+  .user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+  }
+
+  .user-project {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  .user-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .user-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .trend-up {
+    color: #10b981;
+    font-size: 14px;
+  }
+
+  .trend-down {
+    color: #ef4444;
+    font-size: 14px;
+  }
+
+  /* ====== Bottom Row: Tasks Stats ====== */
+  .bottom-cards-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .task-card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    flex: 1;
+    min-width: 280px;
+    transition: transform 0.2s;
+  }
+
+  .task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  }
+
+  .task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .task-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .task-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #111827;
+    margin: 8px 0;
+  }
+
+  .task-subtext {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  .task-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .task-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .task-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+
+  .task-percent {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3b82f6;
+  }
+
+  /* ====== Table Card ====== */
+  .table-card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+  }
+
+  .table-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  }
+
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .table-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .data-table th {
+    font-weight: 600;
+    color: #374151;
+    background: #f9fafb;
+  }
+
+  .data-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .status-green {
+    background: rgba(16,185,129,0.2);
+    color: #10b981;
+  }
+
+  .status-orange {
+    background: rgba(245,158,11,0.2);
+    color: #f59e0b;
+  }
+
+  .status-red {
+    background: rgba(239,68,68,0.2);
+    color: #ef4444;
+  }
+
+  /* ====== Responsive ====== */
+  @media (max-width: 768px) {
+    .dashboard-layout {
+      flex-direction: column;
+    }
+    .sidebar {
+      width: 100%;
+      position: static;
+      height: auto;
+      margin-bottom: 20px;
+    }
+    .main-content {
+      margin-left: 0;
+    }
+    .top-cards-row,
+    .bottom-cards-row {
+      flex-direction: column;
+    }
+    .top-card,
+    .task-card {
+      min-width: 100%;
+    }
+    .middle-cards-row { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 480px) {
+    .main-content { padding: 12px; }
+    .card-value { font-size: 24px; }
+    .data-table th, .data-table td { padding: 6px 8px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h1>Plateforme Events</h1>
+    <ul>
+      {% for app in app_list %}
+        <li><a href="{% url 'admin:app_list' app.app_label %}">{{ app.name }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <h1 class="dashboard-title">Tableau de bord BI</h1>
+
+    <!-- Top Row: 3 Cards Side by Side -->
+    <div class="top-cards-row">
+      <div class="top-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">📋</span> Project Task
+          </div>
+          <span class="progress-percent">23% Done</span>
+        </div>
+        <div class="card-value">6/10</div>
+        <div class="card-subtext">Complete Task</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 23%;"></div>
+        </div>
+        <div class="card-subtext">Project Team : 28 Persons</div>
+      </div>
+
+      <div class="top-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">📈</span> Sales Statistics
+          </div>
+        </div>
+        <div class="card-value">2,30,598</div>
+        <div class="card-subtext">Top selling items statistic by last month</div>
+      </div>
+
+      <div class="top-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-icon">🎉</span> Upcoming Event
+          </div>
+          <span class="progress-percent">34%</span>
+        </div>
+        <div class="card-value">45</div>
+        <div class="card-subtext">Competitors</div>
+        <div class="card-subtext">You can participate in event</div>
+        <div class="calendar-icon">📅</div>
+      </div>
+    </div>
+
+    <!-- Middle Row: Reply, Statistics, User List -->
+    <div class="middle-cards-row">
+      <div class="metric-card">
+        <div class="metric-header">
+          <div class="metric-title">Reply</div>
+        </div>
+        <div class="card-value">2.43 h</div>
+        <div class="card-subtext">AVERAGE TIME FOR FIRST REPLY</div>
+        <div style="margin-top: 16px; display: flex; gap: 12px; justify-content: space-around;">
+          <div style="text-align: center;">
+            <div style="background: linear-gradient(135deg, #06b6d4, #059669); width: 60px; height: 80px; border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; color: white; font-weight: bold; margin-bottom: 4px;">53</div>
+            <div style="font-size: 12px; color: #6b7280;">Sport</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="background: #8b5cf6; width: 60px; height: 60px; border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; color: white; font-weight: bold; margin-bottom: 4px;">13</div>
+            <div style="font-size: 12px; color: #6b7280;">Music</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="background: #3b82f6; width: 60px; height: 70px; border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; color: white; font-weight: bold; margin-bottom: 4px;">30</div>
+            <div style="font-size: 12px; color: #6b7280;">Travel</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="background: #f59e0b; width: 60px; height: 40px; border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; color: white; font-weight: bold; margin-bottom: 4px;">4</div>
+            <div style="font-size: 12px; color: #6b7280;">News</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <div class="metric-title">Statistics</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="donutChart" class="chart-canvas"></canvas>
+        </div>
+        <div class="stat-bars">
+          <div class="stat-bar-item">
+            <div class="stat-label">23%</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width: 23%; background: #06b6d4;"></div></div>
+          </div>
+          <div class="stat-bar-item">
+            <div class="stat-label">35%</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width: 35%; background: #ef4444;"></div></div>
+          </div>
+          <div class="stat-bar-item">
+            <div class="stat-label">14%</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width: 14%; background: #10b981;"></div></div>
+          </div>
+          <div class="stat-bar-item">
+            <div class="stat-label">28%</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width: 28%; background: #3b82f6;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="user-list-card">
+        <div class="user-list-header">
+          <div class="user-list-title">Today</div>
+          <div class="tab-nav">
+            <div class="tab-btn active">Today</div>
+            <div class="tab-btn">This Week</div>
+            <div class="tab-btn">All</div>
+          </div>
+        </div>
+        <div class="user-list">
+          <div class="user-item">
+            <div class="user-info">
+              <div class="avatar">S</div>
+              <div>
+                <div class="user-name">Silje Larsen</div>
+                <div class="user-project">Project X</div>
+              </div>
+            </div>
+            <div class="user-stats">
+              <div class="user-value">3784</div>
+              <span class="trend-up">▲</span>
+            </div>
+          </div>
+          <div class="user-item">
+            <div class="user-info">
+              <div class="avatar" style="background: #1f2937;">J</div>
+              <div>
+                <div class="user-name">Julie Vad</div>
+                <div class="user-project">Project Y</div>
+              </div>
+            </div>
+            <div class="user-stats">
+              <div class="user-value">3544</div>
+              <span class="trend-up">▲</span>
+            </div>
+          </div>
+          <div class="user-item">
+            <div class="user-info">
+              <div class="avatar">S</div>
+              <div>
+                <div class="user-name">Storm Hanse</div>
+                <div class="user-project">Project Z</div>
+              </div>
+            </div>
+            <div class="user-stats">
+              <div class="user-value">2739</div>
+              <span class="trend-down">▼</span>
+            </div>
+          </div>
+          <div class="user-item">
+            <div class="user-info">
+              <div class="avatar">F</div>
+              <div>
+                <div class="user-name">Frida Thomse</div>
+                <div class="user-project">Project A</div>
+              </div>
+            </div>
+            <div class="user-stats">
+              <div class="user-value">1032</div>
+              <span class="trend-down">▼</span>
+            </div>
+          </div>
+          <div class="user-item">
+            <div class="user-info">
+              <div class="avatar" style="background: #1f2937;">S</div>
+              <div>
+                <div class="user-name">Silje Larsen</div>
+                <div class="user-project">Project B</div>
+              </div>
+            </div>
+            <div class="user-stats">
+              <div class="user-value">8750</div>
+              <span class="trend-up">▲</span>
+            </div>
+          </div>
+          <div class="user-item">
+            <div class="user-info">
+              <div class="avatar">S</div>
+              <div>
+                <div class="user-name">Storm Hanse</div>
+                <div class="user-project">Project C</div>
+              </div>
+            </div>
+            <div class="user-stats">
+              <div class="user-value">3750</div>
+              <span class="trend-down">▼</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compact BI grid: 4 small charts côte-à-côte -->
+    <div style="margin-top:18px;">
+      <div class="bi-grid" style="display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px;">
+        <div class="metric-card">
+          <div class="metric-header"><div class="metric-title">Occupancy</div></div>
+          <div class="chart-container"><canvas id="occupancyChart" class="chart-canvas small"></canvas></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-header"><div class="metric-title">By Category</div></div>
+          <div class="chart-container"><canvas id="categoryChart" class="chart-canvas small"></canvas></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-header"><div class="metric-title">Daily Revenue</div></div>
+          <div class="chart-container"><canvas id="dailyChart" class="chart-canvas small"></canvas></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-header"><div class="metric-title">Top Events</div></div>
+          <div class="chart-container"><canvas id="topEventsChart" class="chart-canvas small"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Row: Overdue, To Do, Completed -->
+    <div class="bottom-cards-row">
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Overdue Tasks</div>
+        </div>
+        <div class="task-value">34</div>
+        <div class="task-subtext">Last Week 60%</div>
+        <div class="task-progress">
+          <div class="task-progress-bar">
+            <div class="task-progress-fill" style="width: 60%; background: #f59e0b;"></div>
+          </div>
+          <span class="task-percent">60%</span>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Tasks to Do</div>
+        </div>
+        <div class="task-value">25</div>
+        <div class="task-subtext">Last Week 40%</div>
+        <div class="task-progress">
+          <div class="task-progress-bar">
+            <div class="task-progress-fill" style="width: 40%; background: #3b82f6;"></div>
+          </div>
+          <span class="task-percent">40%</span>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-header">
+          <div class="task-title">Completed Task</div>
+        </div>
+        <div class="task-value">19</div>
+        <div class="task-subtext">Last Week 70%</div>
+        <div class="task-progress">
+          <div class="task-progress-bar">
+            <div class="task-progress-fill" style="width: 70%; background: #10b981;"></div>
+          </div>
+          <span class="task-percent">70%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Project List Table -->
+   
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Dynamic admin BI charts: fetch admin endpoints and draw standard charts
+  let ADMIN_CHARTS = {};
+
+  function destroyAdminChart(key) {
+    if (ADMIN_CHARTS[key]) {
+      try { ADMIN_CHARTS[key].destroy(); } catch(e) {}
+      ADMIN_CHARTS[key] = null;
+    }
+  }
+
+  function buildAdminCharts(biData, statsData) {
+    // occupancy
+    const occLabels = biData.occupancy.map(o => o.event);
+    const occValues = biData.occupancy.map(o => o.sold);
+    const occCtx = document.getElementById('occupancyChart').getContext('2d');
+    destroyAdminChart('occupancy');
+    ADMIN_CHARTS['occupancy'] = new Chart(occCtx, {
+      type: 'bar',
+      data: { labels: occLabels, datasets:[{ label:'Tickets sold', data: occValues, backgroundColor:'#3b82f6' }] },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{beginAtZero:true}} }
+    });
+
+    // category doughnut
+    const catLabels = biData.sales_by_category.map(c => c.category);
+    const catValues = biData.sales_by_category.map(c => c.count);
+    const catCtx = document.getElementById('categoryChart').getContext('2d');
+    destroyAdminChart('category');
+    ADMIN_CHARTS['category'] = new Chart(catCtx, {
+      type:'doughnut',
+      data:{ labels:catLabels, datasets:[{ data:catValues, backgroundColor:['#06b6d4','#ef4444','#10b981','#3b82f6','#8b5cf6'] }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:8,font:{size:10}}}} }
+    });
+
+    // daily revenue line (from statsData.payments)
+    const dailyLabels = statsData.payments.map(p => p.month);
+    const dailyValues = statsData.payments.map(p => p.total);
+    const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+    destroyAdminChart('daily');
+    ADMIN_CHARTS['daily'] = new Chart(dailyCtx, {
+      type:'line',
+      data:{ labels:dailyLabels, datasets:[{ label:'Revenue', data:dailyValues, fill:true, backgroundColor:'rgba(59,130,246,0.12)', borderColor:'#3b82f6', tension:0.2 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}} }
+    });
+
+    // top events bar
+    const topLabels = biData.top_events.map(t => t.event);
+    const topValues = biData.top_events.map(t => t.count);
+    const topCtx = document.getElementById('topEventsChart').getContext('2d');
+    destroyAdminChart('topEvents');
+    ADMIN_CHARTS['topEvents'] = new Chart(topCtx, {
+      type:'bar',
+      data:{ labels:topLabels, datasets:[{ data:topValues, backgroundColor:'#10b981' }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}} }
+    });
+
+    // keep main donut updated too (existing #donutChart canvas)
+    try {
+      const donutCtx = document.getElementById('donutChart').getContext('2d');
+      destroyAdminChart('donut');
+      ADMIN_CHARTS['donut'] = new Chart(donutCtx, {
+        type:'doughnut',
+        data:{ labels:catLabels, datasets:[{ data:catValues, backgroundColor:['#06b6d4','#ef4444','#10b981','#3b82f6'] }] },
+        options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1, plugins:{legend:{display:false}}, cutout:'60%' }
+      });
+    } catch(e) { /* ignore if canvas missing */ }
+  }
+
+  async function fetchAdminDataAndRender() {
+    try {
+      const resp1 = await fetch('{% url "admin-bi-data" %}');
+      const biData = await resp1.json();
+      const resp2 = await fetch('{% url "admin-stats-data" %}');
+      const statsData = await resp2.json();
+      buildAdminCharts(biData, statsData);
+    } catch (err) {
+      console.error('Error fetching admin BI data', err);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // set small canvas heights
+    document.querySelectorAll('.chart-canvas.small').forEach(c=>{ c.style.height='140px'; });
+    fetchAdminDataAndRender();
+  });
+</script>
+{% endblock %}
+
+
+
+              <script>
+                              
+              </script>
+                        </body>
+                        </html>
+                    

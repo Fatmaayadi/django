@@ -1,0 +1,45 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static admin_urls %}
+
+{% block title %}{{ site_title|default:_("Django site admin") }}{% endblock %}
+
+{% block content %}
+  <link rel="stylesheet" href="{% static 'events/css/bi.css' %}">
+
+  <div class="bi-container">
+    <h1 class="bi-title">Admin Dashboard</h1>
+
+    <div style="display:grid;grid-template-columns: 1fr 420px; gap:20px; align-items:start;">
+      <div>
+        {# Left: standard app list rendered by Django admin #}
+        {% include "admin/app_list.html" %}
+      </div>
+
+      <aside style="min-width:320px;">
+        <div class="bi-card" style="padding:10px;">
+          <h3 style="margin:4px 0 8px;">Business Intelligence</h3>
+          <p style="margin:0 0 8px;color:#6b7280;">Vue rapide du dashboard BI. Cliquez pour ouvrir en plein écran.</p>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+            <a href="{% url 'admin-bi' %}" target="_blank" class="btn-small">Ouvrir le BI</a>
+            <a href="{% url 'admin-bi' %}" target="_self" class="btn-small" style="background:#eef2ff;border-color:#c7d2fe;color:#1e40af;">Afficher</a>
+          </div>
+          <div style="border:1px solid #e6e9ee;border-radius:8px;overflow:hidden;">
+            <iframe src="{% url 'admin-bi' %}" style="width:100%;height:420px;border:0;display:block;" title="BI Dashboard (embed)"></iframe>
+          </div>
+        </div>
+
+        <div style="height:18px"></div>
+
+        <div class="bi-card" style="padding:10px;">
+          <h4 style="margin:4px 0 8px;">Raccourcis</h4>
+          <ul style="margin:0;padding-left:18px;color:#374151;">
+            <li><a href="{% url 'admin:auth_user_changelist' %}">Utilisateurs</a></li>
+            <li><a href="{% url 'admin:events_event_changelist' %}">Événements</a></li>
+            <li><a href="{% url 'admin:events_ticket_changelist' %}">Tickets</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+{% endblock %}

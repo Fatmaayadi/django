@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card" style="max-width:520px;margin:18px auto;text-align:center">
+  <h2>Déconnecté</h2>
+  <p class="muted">Vous avez été déconnecté avec succès.</p>
+  <p><a href="/">Retour à l'accueil</a> • <a href="{% url 'login' %}">Se reconnecter</a></p>
+</div>
+{% endblock %}
