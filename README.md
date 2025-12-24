@@ -1,45 +1,76 @@
-# Plateforme de Gestion d'Événements (mini)
 
-Ce projet est un squelette Django + Django REST Framework pour une plateforme de gestion d'événements.
-Il contient un backend avec APIs et 3 pages frontend (HTML/CSS/vanilla JS) :
-- Accueil (liste d'événements)
-- Détail d'événement
-- Inscription (avec choix d'intérêts)
 
-## Installation rapide (local)
-1. Crée un virtualenv et active-le.
+---
+
+# **Event Management Platform **
+
+This project is a **Django + Django REST Framework** skeleton for a simple event management platform.
+It includes a backend with APIs and three frontend pages built with **HTML/CSS/vanilla JavaScript**:
+
+* **Home** – Displays the list of events
+* **Event Details** – Shows information about a specific event
+* **Registration** – Allows users to register and select their interests
+
+---
+
+## **Quick Installation (Local)**
+
+1. **Create and activate a virtual environment**
+
    ```bash
    python -m venv venv
-   source venv/bin/activate  # Windows: venv\Scripts\activate
+   source venv/bin/activate      # Windows: venv\Scripts\activate
    ```
-2. Installe les dépendances:
-   ```
+
+2. **Install dependencies**
+
+   ```bash
    pip install -r requirements.txt
    ```
-3. Make migrations & migrate:
-   ```
+
+3. **Create and apply migrations**
+
+   ```bash
    python manage.py makemigrations
    python manage.py migrate
    ```
-4. Crée un superuser:
-   ```
+
+4. **Create a superuser**
+
+   ```bash
    python manage.py createsuperuser
    ```
-5. Lance le serveur:
-   ```
+
+5. **Run the development server**
+
+   ```bash
    python manage.py runserver
    ```
-6. Ouvre `http://127.0.0.1:8000/`
 
-## Notes
-- DB par défaut: SQLite (pour dev). Tu peux changer dans `config/settings.py` pour PostgreSQL.
-- Le paiement est simulé dans l'endpoint `/api/tickets/book/`. Un webhook demo existe dans `/api/payments/webhook/`.
-- QR codes sont générés et sauvegardés dans `media/qrcodes/`.
+6. Open your browser at:
+   **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)**
 
-## Fichiers importants
-- `events/models.py` : modèles (User, Event, Ticket, Payment...)
-- `events/views.py` : APIs principales
-- `events/templates/` : pages HTML (3 pages)
-- `events/static/css/style.css` : style minimal
+---
 
-Bonne continuation — adapte et améliore selon vos besoins d'équipe.
+## **Notes**
+
+* Default database: **SQLite** (for development).
+  You can switch to **PostgreSQL** in `config/settings.py`.
+* Payment is simulated via the endpoint:
+  `/api/tickets/book/`
+* A demo webhook is available at:
+  `/api/payments/webhook/`
+* QR codes are generated and stored in:
+  `media/qrcodes/`
+
+---
+
+## **Key Files**
+
+* `events/models.py` — Models (User, Event, Ticket, Payment, etc.)
+* `events/views.py` — Main API views
+* `events/templates/` — HTML pages (3 pages)
+* `events/static/css/style.css` — Minimal styling
+
+---
+
