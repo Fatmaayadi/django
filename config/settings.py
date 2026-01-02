@@ -106,3 +106,14 @@ JAZZMIN_SETTINGS['topmenu_links'].insert(0, {
     'url': '/admin/bi/',
     'new_window': False,
 })
+
+# Pour TESTER (affiche les emails dans la console) :
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Pour PRODUCTION avec votre email :
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'ayadifatma418@gmail.com'
+EMAIL_HOST_PASSWORD = 'votre_mot_de_passe_d_application'  # IMPORTANT !
+DEFAULT_FROM_EMAIL = 'ayadifatma418@gmail.com'

@@ -77,6 +77,8 @@ from rest_framework import viewsets, generics, views, status
 from rest_framework.response import Response
 from .models import Event, EventCategory, Location, Ticket, Payment, UserInterest, ParticipationHistory
 from .serializers import EventSerializer, RegisterSerializer, EventCategorySerializer, LocationSerializer, TicketSerializer
+from django.core.mail import send_mail
+from .utils_qr import generate_qr_for_ticket
 
 class EventViewSet(viewsets.ModelViewSet):
     serializer_class = EventSerializer
@@ -126,8 +128,100 @@ class StatsAPI(views.APIView):
 
 class PaymentCreateAPI(views.APIView):
     def post(self, request):
-        return Response({'detail': 'PaymentCreateAPI stub'}, status=status.HTTP_200_OK)
+        event_id = request.data.get('event_id')
+        quantity = int(request.data.get('quantity', 1))
+        try:
+            event = Event.objects.get(id=event_id)
+        except Event.DoesNotExist:
+            return Response({'detail': 'Event not found'}, status=404)
+        payment = Payment.objects.create(
+            amount=(event.price or 0) * quantity,
+            paid=False
+        )
+        return Response({'payment_id': payment.id, 'amount': payment.amount}, status=201)
 
 class PaymentConfirmAPI(views.APIView):
     def post(self, request):
-        return Response({'detail': 'PaymentConfirmAPI stub'}, status=status.HTTP_200_OK)
+        # Récupérer les infos du paiement
+        payment_id = request.data.get('payment_id')
+        event_id = request.data.get('event_id')
+        quantity = int(request.data.get('quantity', 1))
+        buyer_name = request.data.get('buyer_name', '')
+        buyer_email = request.data.get('buyer_email', '')
+        no_card_ref = request.data.get('no_card_ref', None)
+        user = request.user if request.user.is_authenticated else None
+
+        # Récupérer l'événement et le paiement
+        try:
+            event = Event.objects.get(id=event_id)
+        except Event.DoesNotExist:
+            return Response({'detail': 'Event not found'}, status=404)
+        try:
+            payment = Payment.objects.get(id=payment_id)
+        except Payment.DoesNotExist:
+            return Response({'detail': 'Payment not found'}, status=404)
+
+        tickets = []
+        for i in range(quantity):
+            reference = f"{event.id}-{payment.id}-{i+1}"
+            ticket = Ticket.objects.create(
+                user=user,
+                event=event,
+                reference=reference,
+                seat_number=None,
+                status='valid'
+            )
+            qr_url = generate_qr_for_ticket(ticket)
+            payment.ticket = ticket
+            payment.paid = True
+            payment.save()
+            
+            # ✅ CORRECTION ICI : L'email est envoyé À buyer_email
+            if buyer_email:
+                # 1. Email au client (destinataire = buyer_email)
+                send_mail(
+                    subject=f"Votre billet pour {event.title}",
+                    message=f"""Bonjour {buyer_name},
+
+Votre billet pour l'événement "{event.title}" a été réservé avec succès.
+
+Détails :
+• Événement : {event.title}
+• Date : {event.date}
+• Référence : {reference}
+• Quantité : {quantity} billet(s)
+• Prix total : {(event.price or 0) * quantity} TND
+
+Votre QR code : {qr_url}
+
+Présentez ce QR code à l'entrée.
+
+Merci,
+Plateforme Events
+                    """,
+                    from_email="noreply@plateformeevents.com",  # Expéditeur
+                    recipient_list=[buyer_email],  # Destinataire = email du formulaire
+                    fail_silently=False,
+                )
+                
+                # 2. Email de confirmation à votre ademail (optionnel)
+                send_mail(
+                    subject=f"Nouvelle réservation - {event.title}",
+                    message=f"""Nouvelle réservation reçue :
+
+Client : {buyer_name} ({buyer_email})
+Événement : {event.title}
+Référence : {reference}
+Quantité : {quantity}
+Montant : {(event.price or 0) * quantity} TND
+                    """,
+                    from_email="noreply@plateformeevents.com",
+                    recipient_list=["ayadifatma418@gmail.com"],  # Votre email de notification
+                    fail_silently=True,
+                )
+            
+            ticket.status = 'valid'
+            ticket.save()
+            tickets.append(ticket)
+        
+        return Response(TicketSerializer(tickets, many=True).data)

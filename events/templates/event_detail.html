@@ -13,18 +13,18 @@
     </div>
 
     <div style="margin-top:8px">
-      <label>Paiement sans carte (26 chiffres, optionnel)</label>
+      <label>Paiement par carte (26 chiffres)</label>
       <input id="pm-no-card" type="text" inputmode="numeric" maxlength="26" placeholder="Entrez 26 chiffres" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd" />
-      <small style="color:#6b7280">Si vous payez sans carte, entrez les 26 chiffres qui vous ont été fournis.</small>
+      <small style="color:#6b7280">Si vous payez par carte, entrez les 26 chiffres qui vous ont été fournis.</small>
     </div>
 
     <div style="margin-top:8px">
-      <label>Nom (pour reçu)</label>
+      <label>Nom & Prénom</label>
       <input id="pm-name" type="text" placeholder="Prénom Nom" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd" />
     </div>
 
     <div style="margin-top:8px">
-      <label>Email (reçu)</label>
+      <label>Email</label>
       <input id="pm-email" type="email" placeholder="email@exemple.com" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd" />
     </div>
 
@@ -139,7 +139,7 @@ function showModal(unitPrice, onPay){
     const qty = parseInt(qtyInput.value) || 1;
     if(qty<1 || qty>5){ alert('Quantité invalide (1–5)'); return; }
     const noCard = document.getElementById('pm-no-card').value.trim();
-    if(noCard && noCard.replace(/\D/g,'').length!==26){ alert('Le code sans-carte doit contenir exactement 26 chiffres.'); return; }
+    if(noCard && noCard.replace(/\D/g,'').length!==26){ alert('Le code de la carte doit contenir exactement 26 chiffres.'); return; }
     try{ await onPay(qty); } finally{ modal.style.display='none'; }
   };
 }
