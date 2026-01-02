@@ -2,30 +2,34 @@
 {% block content %}
 <div id="event" class="card">Chargement...</div>
 
-<!-- Simple payment modal (hidden until needed) -->
+<!-- Modal de paiement -->
 <div id="paymentModal" class="modal" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:60">
   <div style="background:#fff;padding:20px;border-radius:8px;max-width:520px;width:94%">
     <h3 id="pm-title">Paiement sécurisé</h3>
+
     <div style="margin-top:8px">
-      <label style="display:block;margin-bottom:6px">Quantité (1–5)</label>
+      <label>Quantité (1–5)</label>
       <input id="pm-quantity" type="number" min="1" max="5" value="1" style="width:80px;padding:8px;border-radius:6px;border:1px solid #ddd" />
     </div>
 
     <div style="margin-top:8px">
-      <label style="display:block;margin-bottom:6px">Paiement sans carte (26 chiffres, optionnel)</label>
+      <label>Paiement sans carte (26 chiffres, optionnel)</label>
       <input id="pm-no-card" type="text" inputmode="numeric" maxlength="26" placeholder="Entrez 26 chiffres" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd" />
       <small style="color:#6b7280">Si vous payez sans carte, entrez les 26 chiffres qui vous ont été fournis.</small>
     </div>
 
     <div style="margin-top:8px">
-      <label style="display:block;margin-bottom:6px">Nom (pour reçu)</label>
+      <label>Nom (pour reçu)</label>
       <input id="pm-name" type="text" placeholder="Prénom Nom" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd" />
     </div>
+
     <div style="margin-top:8px">
-      <label style="display:block;margin-bottom:6px">Email (reçu)</label>
+      <label>Email (reçu)</label>
       <input id="pm-email" type="email" placeholder="email@exemple.com" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd" />
     </div>
-    <p id="pm-body" style="margin-top:12px;color:#555">Montant</p>
+
+    <p id="pm-body" style="margin-top:12px;color:#555">Montant total: 0 TND</p>
+
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
       <button id="pm-cancel" class="btn">Annuler</button>
       <button id="pm-pay" class="btn btn-primary">Payer maintenant</button>
@@ -34,157 +38,112 @@
 </div>
 
 <script>
-    const eventId = {{ event_id }};
-  function showModal(unitPrice, onPay){
-    const modal = document.getElementById('paymentModal');
-    const bodyP = document.getElementById('pm-body');
-    function updateAmountDisplay(qty){
-      const total = (Number(unitPrice) || 0) * (Number(qty) || 1);
-      bodyP.innerText = `Montant total: ${total}`;
-    }
-    // default quantity 1
-    const qtyInput = document.getElementById('pm-quantity');
-    qtyInput.value = 1;
-    // update when quantity changes
-    qtyInput.oninput = () => { let q = parseInt(qtyInput.value) || 1; if(q<1) q=1; if(q>5) q=5; qtyInput.value=q; updateAmountDisplay(q); };
-    // initialize amount display
-    updateAmountDisplay(1);
-    modal.style.display = 'flex';
-    const payBtn = document.getElementById('pm-pay');
-    const cancelBtn = document.getElementById('pm-cancel');
-    function cleanup(){ modal.style.display='none'; payBtn.onclick = null; cancelBtn.onclick = null; }
-    cancelBtn.onclick = () => { cleanup(); };
-    payBtn.onclick = async () => {
-      const qty = parseInt(qtyInput.value) || 1;
-      if(qty < 1 || qty > 5){ alert('Quantité invalide (1–5)'); return; }
-      // validate no-card input if provided
-      const noCard = document.getElementById('pm-no-card').value.trim();
-      if(noCard){
-        const digits = noCard.replace(/\D/g,'');
-        if(digits.length !== 26){ alert('Le code sans-carte doit contenir exactement 26 chiffres.'); return; }
-      }
-      try { await onPay(qty); } finally { cleanup(); }
-    };
-  }
+const eventId = {{ event_id }};
 
-  async function load(){
-    const res = await fetch(`/api/events/${eventId}/`);
-    if(!res.ok){ document.getElementById('event').innerText='Événement introuvable'; return; }
-    const ev = await res.json();
-    const container = document.getElementById('event');
-    container.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
-        <div>
-          <h2>${ev.title}</h2>
-          <p class="muted">${new Date(ev.date).toLocaleString()} • ${ev.location ? ev.location.name : 'En ligne'}</p>
-          <p>${ev.description || ''}</p>
+async function load() {
+  const res = await fetch(`/api/events/${eventId}/`);
+  const container = document.getElementById('event');
+  if(!res.ok){ container.innerText='Événement introuvable'; return; }
+
+  const ev = await res.json();
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+      <div>
+        <h2>${ev.title}</h2>
+        <p class="muted">${new Date(ev.date).toLocaleString()} • ${ev.location ? ev.location.name : 'En ligne'}</p>
+        <p>${ev.description || ''}</p>
+      </div>
+      <aside class="card" style="background:linear-gradient(180deg,#fff,#f8fbff)">
+        <div class="muted">Prix</div>
+        <h3 style="margin-top:6px">${ev.price ?? 'Gratuit'}</h3>
+        <div style="margin-top:12px">
+          <button id="bookBtn">Réserver</button>
         </div>
-        <aside class="card" style="background:linear-gradient(180deg,#fff,#f8fbff)">
-          <div class="muted">Prix</div>
-          <h3 style="margin-top:6px">${ev.price ?? 'Gratuit'}</h3>
-          <div style="margin-top:12px">
-            <button id="bookBtn">Réserver</button>
-          </div>
-          <div id="result" style="margin-top:12px"></div>
-        </aside>
-      </div>`;
+        <div id="result" style="margin-top:12px"></div>
+      </aside>
+    </div>
+  `;
 
-    // Insert recommendations placeholder below the main block
-    const recSection = document.createElement('div');
-    recSection.style.marginTop = '18px';
-    recSection.id = 'recommendationsSection';
-    recSection.innerHTML = `
-      <h3>Suggestions pour vous</h3>
-      <div id="recommendations" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">Chargement des suggestions...</div>
-    `;
-    container.appendChild(recSection);
-
-    document.getElementById('bookBtn').onclick = async () => {
-      if(!window.CURRENT_USER || !window.CURRENT_USER.is_authenticated){
-        const next = encodeURIComponent(window.location.pathname + window.location.search);
-        window.location.href = `/accounts/login/?next=${next}`;
-        return;
-      }
-
-      // Step 1: create payment (paid=false)
-      // initial create: include quantity to reserve amount
-      const initialQty = 1; // default until user chooses in modal; we will pass quantity when confirming
-      const createResp = await fetch('/api/payments/create/', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {'Content-Type':'application/json', 'X-CSRFToken': window.CSRF_TOKEN},
-        body: JSON.stringify({ event_id: ev.id, quantity: initialQty })
-      });
-      if(createResp.status === 401){
-        const next = encodeURIComponent(window.location.pathname + window.location.search);
-        window.location.href = `/accounts/login/?next=${next}`;
-        return;
-      }
-      if(!createResp.ok){ const d = await createResp.json(); alert('Erreur: ' + (d.detail||JSON.stringify(d))); return; }
-      const createData = await createResp.json();
-
-      // show simple payment modal (simulate provider interaction)
-      showModal(createData.amount, async (qty) => {
-        // read buyer info (simulated)
-        const buyerName = document.getElementById('pm-name').value || window.CURRENT_USER.username || '';
-        const buyerEmail = document.getElementById('pm-email').value || window.CURRENT_USER.email || '';
-          // Step 2: confirm payment (simulate success) with chosen quantity
-          const noCardRef = document.getElementById('pm-no-card').value.trim();
-          const payload = { payment_id: createData.payment_id, event_id: ev.id, quantity: qty, buyer_name: buyerName, buyer_email: buyerEmail };
-          if(noCardRef) payload.no_card_ref = noCardRef; // send optional 26-digit reference
-          const confirmResp = await fetch('/api/payments/confirm/', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {'Content-Type':'application/json', 'X-CSRFToken': window.CSRF_TOKEN},
-            body: JSON.stringify(payload)
-          });
-        if(!confirmResp.ok){ const d = await confirmResp.json(); alert('Erreur paiement: ' + (d.detail||JSON.stringify(d))); return; }
-        const tickets = await confirmResp.json();
-        const out = document.getElementById('result');
-        if(Array.isArray(tickets)){
-          out.innerHTML = `<p>Paiement confirmé — ${tickets.length} billet(s) créé(s):</p>` +
-            tickets.map(t=>`<div style="padding:6px 0">Réf: <strong>${t.reference}</strong> — Siège: <strong>${t.seat_number||'N/A'}</strong> — <a href="${t.qr_code}" target="_blank">QR</a></div>`).join('');
-        } else {
-          out.innerHTML = `<p>Paiement confirmé — billet créé. Réf: <strong>${tickets.reference}</strong></p>`;
-        }
-      });
+  document.getElementById('bookBtn').onclick = async () => {
+    if(!window.CURRENT_USER || !window.CURRENT_USER.is_authenticated){
+      const next = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/accounts/login/?next=${next}`;
+      return;
     }
 
-    // Load personalized recommendations (or fallback) and render cards
-    async function loadRecommendations(){
-      const box = document.getElementById('recommendations');
-      box.innerHTML = 'Chargement des suggestions...';
-      try{
-        let url = '/api/events/?ordering=date';
-        if(window.CURRENT_USER && window.CURRENT_USER.is_authenticated){
-          url = `/api/recommendations/${window.CURRENT_USER.id}/`;
-        }
-        const resp = await fetch(url, { credentials: 'same-origin' });
-        if(!resp.ok){ box.innerHTML = '<div>Pas de suggestions pour le moment.</div>'; return; }
-        const data = await resp.json();
-        // If stats endpoint returned, adapt shape
-        let events = data;
-        if(data && data.top_events){
-          // stats endpoint shape
-          events = data.top_events.map(te => ({ id: te.id, title: te.title }));
-        }
-        if(!Array.isArray(events) || events.length === 0){ box.innerHTML = '<div>Aucune suggestion.</div>'; return; }
-        // render up to 4
-        const toShow = events.slice(0,4);
-        box.innerHTML = toShow.map(ev => {
-          const when = ev.date ? new Date(ev.date).toLocaleDateString() : '';
-          const price = (ev.price !== undefined) ? (ev.price || 'Gratuit') : '';
-          return `<a href="/events/${ev.id}/" class="card" style="text-decoration:none;color:inherit;padding:12px;border-radius:8px;background:#fff;box-shadow:0 6px 14px rgba(0,0,0,0.04)">
-                    <div style="font-weight:600;margin-bottom:6px">${ev.title}</div>
-                    <div style="font-size:12px;color:#6b7280">${when} • ${ev.location && ev.location.name ? ev.location.name : ''}</div>
-                    <div style="margin-top:8px;font-weight:700">${price}</div>
-                  </a>`;
-        }).join('');
-      }catch(e){ console.error('Recommendations error', e); box.innerHTML = '<div>Erreur en récupérant les suggestions.</div>'; }
-    }
+    // Step 1: créer le paiement
+    const createResp = await fetch('/api/payments/create/', {
+      method:'POST',
+      credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-CSRFToken':window.CSRF_TOKEN},
+      body: JSON.stringify({event_id: ev.id, quantity: 1})
+    });
+    if(!createResp.ok){ alert('Erreur création paiement'); return; }
+    const createData = await createResp.json();
 
-    loadRecommendations();
+    // Step 2: afficher le modal
+    showModal(ev.price || 0, async (qty) => {
+      const buyerName = document.getElementById('pm-name').value || window.CURRENT_USER.username || '';
+      const buyerEmail = document.getElementById('pm-email').value || window.CURRENT_USER.email || '';
+      const noCardRef = document.getElementById('pm-no-card').value.trim();
+
+      const payload = { payment_id: createData.payment_id, event_id: ev.id, quantity: qty, buyer_name: buyerName, buyer_email: buyerEmail };
+      if(noCardRef) payload.no_card_ref = noCardRef;
+
+      const confirmResp = await fetch('/api/payments/confirm/', {
+        method:'POST',
+        credentials:'same-origin',
+        headers:{'Content-Type':'application/json','X-CSRFToken':window.CSRF_TOKEN},
+        body: JSON.stringify(payload)
+      });
+
+      if(!confirmResp.ok){ const d=await confirmResp.json(); alert('Erreur paiement: '+(d.detail||JSON.stringify(d))); return; }
+      const tickets = await confirmResp.json();
+      const out = document.getElementById('result');
+
+      if(Array.isArray(tickets)){
+        out.innerHTML = `<p>Paiement confirmé — ${tickets.length} billet(s) créé(s):</p>` +
+          tickets.map(t=>`<div style="padding:6px 0">Réf: <strong>${t.reference}</strong> — Siège: <strong>${t.seat_number||'N/A'}</strong> — <a href="${t.qr_code}" target="_blank">QR</a></div>`).join('');
+      } else {
+        out.innerHTML = `<p>Paiement confirmé — billet créé. Réf: <strong>${tickets.reference}</strong></p>`;
+      }
+    });
   }
-  load();
+}
+
+function showModal(unitPrice, onPay){
+  const modal = document.getElementById('paymentModal');
+  const bodyP = document.getElementById('pm-body');
+  const qtyInput = document.getElementById('pm-quantity');
+  const payBtn = document.getElementById('pm-pay');
+  const cancelBtn = document.getElementById('pm-cancel');
+
+  function updateAmountDisplay(qty){
+    if(qty < 1) qty = 1;
+    if(qty > 5) qty = 5;
+    qtyInput.value = qty;
+    const total = (Number(unitPrice)||0) * qty;
+    bodyP.innerText = `Montant total: ${total.toFixed(2)} TND`;
+  }
+
+  qtyInput.value = 1;
+  updateAmountDisplay(1);
+
+  qtyInput.oninput = () => updateAmountDisplay(parseInt(qtyInput.value) || 1);
+
+  modal.style.display = 'flex';
+
+  cancelBtn.onclick = () => { modal.style.display='none'; payBtn.onclick=null; cancelBtn.onclick=null; };
+
+  payBtn.onclick = async () => {
+    const qty = parseInt(qtyInput.value) || 1;
+    if(qty<1 || qty>5){ alert('Quantité invalide (1–5)'); return; }
+    const noCard = document.getElementById('pm-no-card').value.trim();
+    if(noCard && noCard.replace(/\D/g,'').length!==26){ alert('Le code sans-carte doit contenir exactement 26 chiffres.'); return; }
+    try{ await onPay(qty); } finally{ modal.style.display='none'; }
+  };
+}
+
+load();
 </script>
 {% endblock %}

@@ -2,9 +2,11 @@
   "ExpandedNodes": [
     "",
     "\\events",
+    "\\events\\management",
+    "\\events\\management\\commands",
     "\\events\\static",
     "\\events\\static\\css"
   ],
-  "SelectedNode": "\\events\\static\\css\\style.css",
+  "SelectedNode": "\\events\\management\\commands\\populate_db.py",
   "PreviewInSolutionExplorer": false
 }

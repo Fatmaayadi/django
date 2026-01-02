@@ -29,9 +29,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id','username','email','first_name','last_name')
 
 class EventCategorySerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(read_only=True)
     class Meta:
         model = EventCategory
-        fields = '__all__'
+        fields = ['id', 'name', 'image']
 
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:

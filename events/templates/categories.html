@@ -1,33 +1,166 @@
 {% extends 'base.html' %}
 {% block content %}
 <section class="card">
-  <h2>Catégories</h2>
-  <p class="muted">Sélectionnez une catégorie pour découvrir des événements.</p>
-  <div id="categories" style="margin-top:14px">Chargement...</div>
+  <h2>Catégories d'événements</h2>
+  <p class="muted">Explorez les événements par catégorie</p>
+  <div id="categories" style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+    Chargement...
+  </div>
+</section>
+
+<section style="margin-top: 2rem;">
+  <h3 id="categoryTitle" style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem;">Tous les événements</h3>
+  <div id="events" class="events-grid">Chargement...</div>
 </section>
 
 <script>
+let currentCategory = null;
+
 async function loadCategories(){
-  try{
+  try {
     const res = await fetch('/api/categories/');
-    if(!res.ok){ document.getElementById('categories').innerText = 'Aucune catégorie disponible.'; return }
+    if (!res.ok) { 
+      document.getElementById('categories').innerHTML = '<p class="muted">Aucune catégorie disponible.</p>'; 
+      return;
+    }
+    
     const data = await res.json();
     const ctn = document.getElementById('categories');
     ctn.innerHTML = '';
-    data.forEach(cat => {
-      const el = document.createElement('div');
-      el.className = 'card';
-      el.style.display = 'inline-block';
-      el.style.marginRight = '8px';
-      el.style.minWidth = '180px';
-      const imgSrc = cat.image || '/static/images/default-category.svg';
-      const imgHtml = `<img src="${imgSrc}" style="width:100%;height:110px;object-fit:cover;border-radius:6px;margin-bottom:8px" />`;
-      el.innerHTML = `${imgHtml}<h4>${cat.name}</h4><p class="muted">${cat.description || ''}</p><p><a href='/events/?category=${cat.id}'>Voir</a></p>`;
-      ctn.appendChild(el);
+    
+    // Add "All" button
+    const allBtn = document.createElement('button');
+    allBtn.className = 'card';
+    allBtn.style.cssText = 'cursor: pointer; text-align: center; padding: 1.5rem 1rem; border: 2px solid transparent; transition: all 0.2s;';
+    allBtn.innerHTML = `
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+      <h4 style="margin: 0; font-size: 1rem;">Tous</h4>
+    `;
+    allBtn.onclick = () => filterByCategory(null, 'Tous les événements');
+    ctn.appendChild(allBtn);
+    
+    // Emoji fallback by category name (simple mapping)
+    const emojiMap = {
+      'Musique': '🎵', 'Sport': '🏅', 'Arts & Culture': '🎨', 'Technologie': '💻', 'Gastronomie': '🍽️',
+      'Business': '💼', 'Éducation': '📚', 'Bien-être': '🧘', 'Famille': '👨‍👩‍👧‍👦', 'Nature': '🌳',
+      'Gaming': '🎮', 'Mode': '👗', 'Littérature': '📖', 'Photographie': '📷'
+    };
+    data.categories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'card';
+      btn.style.cssText = 'cursor: pointer; text-align: center; padding: 1.5rem 1rem; border: 2px solid transparent; transition: all 0.2s;';
+      let iconHtml = '';
+      if (cat.image) {
+        iconHtml = `<img src="${cat.image}" alt="${cat.name}" style="width:60px;height:60px;object-fit:cover;border-radius:50%;margin-bottom:0.5rem;" />`;
+      } else if (emojiMap[cat.name]) {
+        iconHtml = `<div style="font-size:2rem;margin-bottom:0.5rem;">${emojiMap[cat.name]}</div>`;
+      } else {
+        iconHtml = `<div style="font-size:2rem;margin-bottom:0.5rem;">📅</div>`;
+      }
+      btn.innerHTML = `
+        ${iconHtml}
+        <h4 style="margin: 0; font-size: 1rem;">${cat.name}</h4>
+      `;
+      btn.onclick = () => filterByCategory(cat.id, cat.name);
+      ctn.appendChild(btn);
     });
-  }catch(e){ document.getElementById('categories').innerText = 'Erreur lors du chargement.' }
+    
+    // Load all events initially
+    loadEvents(null);
+    
+  } catch(e) { 
+    console.error('Error loading categories:', e);
+    document.getElementById('categories').innerHTML = '<p class="muted">Erreur lors du chargement.</p>'; 
+  }
 }
+
+function filterByCategory(categoryId, categoryName) {
+  currentCategory = categoryId;
+  document.getElementById('categoryTitle').textContent = categoryName ? `Événements - ${categoryName}` : 'Tous les événements';
+  
+  // Highlight selected category
+  document.querySelectorAll('#categories button').forEach(btn => {
+    btn.style.borderColor = 'transparent';
+    btn.style.background = '#ffffff';
+  });
+  event.target.closest('button').style.borderColor = '#2c5282';
+  event.target.closest('button').style.background = 'rgba(44, 82, 130, 0.05)';
+  
+  loadEvents(categoryId);
+}
+
+async function loadEvents(categoryId) {
+  try {
+    const eventsContainer = document.getElementById('events');
+    eventsContainer.innerHTML = '<p class="muted">Chargement...</p>';
+    
+    // Fetch events with optional category filter
+    let url = '/api/events/?ordering=date';
+    if (categoryId) {
+      url += `&category=${categoryId}`;
+    }
+    
+    const res = await fetch(url);
+    if (!res.ok) {
+      eventsContainer.innerHTML = '<p class="muted">Erreur lors du chargement des événements.</p>';
+      return;
+    }
+    
+    const data = await res.json();
+    
+    if (!data || data.length === 0) {
+      eventsContainer.innerHTML = '<p class="muted">Aucun événement dans cette catégorie.</p>';
+      return;
+    }
+    
+    eventsContainer.innerHTML = '';
+    
+    data.forEach(ev => {
+      const div = document.createElement('article');
+      div.className = 'card event-card';
+      
+      const eventDate = new Date(ev.date);
+      const formattedDate = eventDate.toLocaleDateString('fr-TN', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      const locationName = ev.location ? ev.location.name : 'Lieu à confirmer';
+      const categoryName = ev.category ? ev.category.name : 'Non catégorisé';
+      const price = ev.price ? `${ev.price} TND` : 'Gratuit';
+      const description = ev.description ? ev.description.substring(0, 100) + '...' : '';
+      
+      div.innerHTML = `
+        <img src="${ev.image || '/static/images/default-event.svg'}" alt="${ev.title}">
+        <div style="padding: 1rem;">
+          <div style="display: inline-block; background: rgba(44, 82, 130, 0.1); color: #2c5282; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 500; margin-bottom: 0.75rem;">
+            ${categoryName}
+          </div>
+          <h3>${ev.title}</h3>
+          <p class="event-meta">📅 ${formattedDate}</p>
+          <p class="event-meta">📍 ${locationName}</p>
+          <p class="muted" style="margin-top: 0.75rem;">${description}</p>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: space-between; align-items: center;">
+            <div style="font-weight: 600; color: #2c5282; font-size: 1.125rem;">${price}</div>
+            <button onclick="openEvent(${ev.id})" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+              Voir détails
+            </button>
+          </div>
+        </div>`;
+      eventsContainer.appendChild(div);
+    });
+    
+  } catch (error) {
+    console.error('Error loading events:', error);
+    document.getElementById('events').innerHTML = '<p class="muted">Erreur lors du chargement des événements.</p>';
+  }
+}
+
+function openEvent(id) {
+  window.location.href = `/events/${id}/`;
+}
+
 loadCategories();
 </script>
-
 {% endblock %}

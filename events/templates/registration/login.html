@@ -1,34 +1,36 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="auth-hero" style="background:linear-gradient(135deg, rgba(0,102,255,0.18), rgba(0,0,0,0.04))">
+<div class="auth-hero page-bg" style="padding: 2.5rem 0;">
   <div class="container text-center" style="color:rgba(255,255,255,0.95)">
-    <h1 style="color:#fff;margin:0;font-family:'Montserrat',sans-serif">Bienvenue</h1>
-    <p style="color:rgba(255,255,255,0.9);margin-top:8px">Connectez-vous pour accéder à vos réservations et tickets.</p>
+    <h1 style="color:#fff;margin:0;font-family:'Montserrat',sans-serif;font-size:2.5rem;letter-spacing:-1px;">Bienvenue 👋</h1>
+    <p style="color:rgba(255,255,255,0.9);margin-top:8px;font-size:1.15rem;">Connectez-vous pour accéder à vos réservations et tickets.</p>
   </div>
 </div>
 
-<div class="auth-wrap">
-  <div class="auth-card">
-    <h2>Connexion</h2>
-    <p class="lead">Entrez vos identifiants pour continuer.</p>
-    <form method="post" action="{% url 'login' %}">
+<div class="auth-wrap" style="display:flex;justify-content:center;align-items:center;min-height:60vh;">
+  <div class="auth-card" style="background:#fff;border-radius:18px;box-shadow:0 4px 32px rgba(44,82,130,0.10);padding:2.5rem 2rem;max-width:400px;width:100%;">
+    <h2 style="font-family:'Montserrat',sans-serif;font-size:2rem;margin-bottom:0.5rem;text-align:center;">Connexion</h2>
+    <p class="lead" style="text-align:center;margin-bottom:2rem;color:#2c5282;font-size:1.1rem;">Entrez vos identifiants pour continuer.</p>
+    <form method="post" action="{% url 'login' %}" style="display:flex;flex-direction:column;gap:1.25rem;">
       {% csrf_token %}
       {% if form.errors %}
-        <div class="card" style="background:#fff6f6;border:1px solid rgba(255,107,107,0.12)">
-          <p class="muted">Identifiants invalides, veuillez réessayer.</p>
+        <div class="card" style="background:#fff6f6;border:1px solid rgba(255,107,107,0.12);padding:0.75rem 1rem;text-align:center;">
+          <p class="muted" style="color:#d32f2f;">Identifiants invalides, veuillez réessayer.</p>
         </div>
       {% endif %}
-      <label class="form-field" for="id_username">Nom d'utilisateur
+      <label class="form-field" for="id_username" style="font-weight:500;font-size:1rem;display:block;margin-bottom:0.5rem;">
+        Nom d'utilisateur
         {{ form.username }}
       </label>
-      <label class="form-field" for="id_password">Mot de passe
+      <label class="form-field" for="id_password" style="font-weight:500;font-size:1rem;display:block;margin-bottom:0.5rem;">
+        Mot de passe
         {{ form.password }}
       </label>
-      <div class="form-actions">
-        <button type="submit" class="btn-primary">Se connecter</button>
-        <a href="{% url 'password_reset' %}" class="btn-outline">Mot de passe oublié?</a>
+      <div class="form-actions" style="display:flex;flex-direction:column;gap:0.75rem;align-items:center;">
+        <button type="submit" class="btn-primary" style="width:100%;padding:0.75rem 0;font-size:1.1rem;border-radius:8px;">Se connecter</button>
+        <a href="{% url 'password_reset' %}" class="btn-outline" style="width:100%;padding:0.75rem 0;border-radius:8px;text-align:center;">Mot de passe oublié?</a>
       </div>
-      <div class="auth-footer">Pas encore membre? <a href="/register/">Inscrivez-vous</a></div>
+      <div class="auth-footer" style="text-align:center;margin-top:1rem;font-size:1rem;">Pas encore membre? <a href="/register/" style="color:#2c5282;font-weight:600;">Inscrivez-vous</a></div>
     </form>
   </div>
 </div>

@@ -1,23 +1,14 @@
 from django.urls import path
-from django.shortcuts import render
-
-def index(request):
-    return render(request, 'index.html')
-
-def event_detail(request, pk):
-    return render(request, 'event_detail.html', {'event_id': pk})
-
-def register_page(request):
-    return render(request, 'register.html')
-
-def categories_page(request):
-    # page simple; front-end will fetch categories via API if available
-    return render(request, 'categories.html')
+from . import views  # toutes les vues sont dans views.py
 
 urlpatterns = [
-    path('events/', index, name='events-list'),
-    path('', index, name='index'),
-    path('events/<int:pk>/', event_detail, name='event-detail'),
-    path('categories/', categories_page, name='categories-page'),
-    path('register/', register_page, name='register-page'),
+    path('', views.index, name='index'),  # page d'accueil
+    path('events/', views.events_list, name='events-list'),  # liste des events (HTML)
+    path('events/<int:event_id>/', views.event_detail, name='event-detail'),  # détail HTML
+    path('categories/', views.categories, name='categories-page'),  # page catégories
+    path('register/', views.register_page, name='register-page'),  # page register
+    path('bi/', views.bi_public, name='bi-public'),  # page BI publique
+    path('about/', views.about, name='about'),
+    path('contact/', views.contact, name='contact'),
+    path('cgu/', views.cgu, name='cgu'),
 ]

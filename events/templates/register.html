@@ -1,34 +1,38 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="auth-hero page-bg">
+<div class="auth-hero page-bg" style="padding: 2.5rem 0;">
   <div class="container text-center" style="color:rgba(255,255,255,0.95)">
-    <h1 style="color:#fff;margin:0;font-family:'Montserrat',sans-serif">Rejoignez Plateforme Events</h1>
-    <p style="color:rgba(255,255,255,0.9);margin-top:8px">Créez un compte pour réserver et gérer vos tickets.</p>
+    <h1 style="color:#fff;margin:0;font-family:'Montserrat',sans-serif;font-size:2.5rem;letter-spacing:-1px;">Rejoignez Plateforme Events 🎉</h1>
+    <p style="color:rgba(255,255,255,0.9);margin-top:8px;font-size:1.15rem;">Créez un compte pour réserver et gérer vos tickets.</p>
   </div>
 </div>
 
-<div class="auth-wrap">
-  <div class="auth-card">
-    <h2>Créer un compte</h2>
-    <p class="lead">Entrez vos informations pour commencer.</p>
-    <form id="registerForm">
-      <label class="form-field">Nom d'utilisateur
-        <input name="username" required placeholder="Votre nom d'utilisateur">
+<div class="auth-wrap" style="display:flex;justify-content:center;align-items:center;min-height:60vh;">
+  <div class="auth-card" style="background:#fff;border-radius:18px;box-shadow:0 4px 32px rgba(44,82,130,0.10);padding:2.5rem 2rem;max-width:400px;width:100%;">
+    <h2 style="font-family:'Montserrat',sans-serif;font-size:2rem;margin-bottom:0.5rem;text-align:center;">Créer un compte</h2>
+    <p class="lead" style="text-align:center;margin-bottom:2rem;color:#2c5282;font-size:1.1rem;">Entrez vos informations pour commencer.</p>
+    <form id="registerForm" style="display:flex;flex-direction:column;gap:1.25rem;">
+      <label class="form-field" style="font-weight:500;font-size:1rem;display:block;margin-bottom:0.5rem;">
+        Nom d'utilisateur
+        <input name="username" required placeholder="Votre nom d'utilisateur" style="width:100%;padding:0.75rem 1rem;border-radius:8px;border:1px solid #e2e8f0;font-size:1rem;">
       </label>
-      <label class="form-field">Email
-        <input name="email" type="email" placeholder="adresse@example.com">
+      <label class="form-field" style="font-weight:500;font-size:1rem;display:block;margin-bottom:0.5rem;">
+        Email
+        <input name="email" type="email" placeholder="adresse@example.com" style="width:100%;padding:0.75rem 1rem;border-radius:8px;border:1px solid #e2e8f0;font-size:1rem;">
       </label>
-      <label class="form-field">Mot de passe
-        <input name="password" type="password" required placeholder="Choisissez un mot de passe">
+      <label class="form-field" style="font-weight:500;font-size:1rem;display:block;margin-bottom:0.5rem;">
+        Mot de passe
+        <input name="password" type="password" required placeholder="Choisissez un mot de passe" style="width:100%;padding:0.75rem 1rem;border-radius:8px;border:1px solid #e2e8f0;font-size:1rem;">
       </label>
-      <label class="form-field">Centres d'intérêt (séparés par virgule)
-        <input name="interests" placeholder="musique, sport, art">
+      <label class="form-field" style="font-weight:500;font-size:1rem;display:block;margin-bottom:0.5rem;">
+        Centres d'intérêt (séparés par virgule)
+        <input name="interests" placeholder="musique, sport, art" style="width:100%;padding:0.75rem 1rem;border-radius:8px;border:1px solid #e2e8f0;font-size:1rem;">
       </label>
-      <div class="form-actions">
-        <button type="submit" class="btn-primary">S'inscrire</button>
-        <a href="/accounts/login/" class="btn-outline" style="text-decoration:none;padding:10px 12px;border-radius:10px">Déjà membre ?</a>
+      <div class="form-actions" style="display:flex;flex-direction:column;gap:0.75rem;align-items:center;">
+        <button type="submit" class="btn-primary" style="width:100%;padding:0.75rem 0;font-size:1.1rem;border-radius:8px;">S'inscrire</button>
+        <a href="/accounts/login/" class="btn-outline" style="width:100%;padding:0.75rem 0;border-radius:8px;text-align:center;text-decoration:none;">Déjà membre ?</a>
       </div>
-      <div id="msg" style="margin-top:12px;color:var(--muted)"></div>
+      <div id="msg" style="margin-top:12px;color:var(--muted);text-align:center;font-size:1rem;"></div>
     </form>
   </div>
 </div>

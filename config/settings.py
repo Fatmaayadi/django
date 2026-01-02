@@ -98,7 +98,7 @@ JAZZMIN_SETTINGS = {
     "welcome_sign": "Bienvenue dans l'administration",
     "copyright": "Plateforme Events",
 }
-
+LOGOUT_REDIRECT_URL = '/accounts/login/'
 # Add a BI quick link in Jazzmin top menu
 JAZZMIN_SETTINGS.setdefault('topmenu_links', [])
 JAZZMIN_SETTINGS['topmenu_links'].insert(0, {

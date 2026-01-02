@@ -1,40 +1,150 @@
+<!-- FILE: events/templates/index.html -->
 {% extends 'base.html' %}
 {% block content %}
-<section class="hero card">
+<section class="hero card" style="margin-bottom:2.5rem;">
   <div class="hero-inner">
-    <h2>Événements à venir</h2>
-    <p class="muted">Découvrez et réservez des événements locaux adaptés à vos goûts.</p>
+    <h2>Découvrez les événements en Tunisie</h2>
+    <p class="muted">Réservez vos billets pour les meilleurs événements culturels, sportifs et artistiques.</p>
   </div>
 </section>
 
+<section id="category-section" class="card" style="margin-bottom:2.5rem; padding:2rem 1.5rem;">
+  <h3 style="font-size:1.25rem; font-weight:600; margin-bottom:1rem;">Explorer par catégorie</h3>
+  <div id="homepage-categories" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:1rem; align-items:center;">Chargement...</div>
+</section>
+
+<section id="featured-event-section" style="margin-bottom:2.5rem;">
+  <h3 style="font-size:1.25rem; font-weight:600; margin-bottom:1rem;">Événement à la une</h3>
+  <div id="featured-event">Chargement...</div>
+</section>
+
 <section>
+  <h3 style="margin-bottom: 1.5rem; font-size: 1.5rem; font-weight: 600;">Événements à venir</h3>
   <div id="events" class="events-grid">Chargement...</div>
 </section>
 
 <script>
-async function fetchEvents(){
-  const res = await fetch('/api/events/');
-  const data = await res.json();
-  const container = document.getElementById('events');
-  container.innerHTML = '';
-  data.forEach(ev => {
-    const div = document.createElement('article');
-    div.className = 'card event-card';
-    div.innerHTML = `
-      <img src="${ev.image || '/static/images/default-event.svg'}" alt="${ev.title}">
-      <h3>${ev.title}</h3>
-      <p class="event-meta">${new Date(ev.date).toLocaleDateString()} • ${ev.location ? ev.location.name : 'En ligne'}</p>
-      <p class="muted">${ev.description ? ev.description.substring(0,120) : ''}...</p>
-      <div style="margin-top:12px;display:flex;gap:8px;justify-content:space-between;align-items:center">
-        <div class="muted">Prix: ${ev.price ?? 'Gratuit'}</div>
-        <div>
-          <button onclick="openEvent(${ev.id})">Voir</button>
-        </div>
-      </div>`;
-    container.appendChild(div);
-  });
+async function fetchCategories() {
+  try {
+    const res = await fetch('/api/categories/');
+    const ctn = document.getElementById('homepage-categories');
+    if (!res.ok) {
+      ctn.innerHTML = '<p class="muted">Aucune catégorie disponible.</p>';
+      return;
+    }
+    const data = await res.json();
+    ctn.innerHTML = '';
+    // Emoji fallback by category name (simple mapping)
+    const emojiMap = {
+      'Musique': '🎵', 'Sport': '🏅', 'Arts & Culture': '🎨', 'Technologie': '💻', 'Gastronomie': '🍽️',
+      'Business': '💼', 'Éducation': '📚', 'Bien-être': '🧘', 'Famille': '👨‍👩‍👧‍👦', 'Nature': '🌳',
+      'Gaming': '🎮', 'Mode': '👗', 'Littérature': '📖', 'Photographie': '📷'
+    };
+    data.categories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'card';
+      btn.style.cssText = 'cursor:pointer;text-align:center;padding:1.25rem 0.5rem;border:2px solid transparent;transition:all 0.2s;box-shadow:0 2px 8px rgba(44,82,130,0.07)';
+      let iconHtml = '';
+      if (cat.image) {
+        iconHtml = `<img src="${cat.image}" alt="${cat.name}" style="width:48px;height:48px;object-fit:cover;border-radius:50%;margin-bottom:0.5rem;" />`;
+      } else if (emojiMap[cat.name]) {
+        iconHtml = `<div style="font-size:2rem;margin-bottom:0.5rem;">${emojiMap[cat.name]}</div>`;
+      } else {
+        iconHtml = `<div style="font-size:2rem;margin-bottom:0.5rem;">📅</div>`;
+      }
+      btn.innerHTML = `
+        ${iconHtml}
+        <h4 style="margin:0;font-size:1rem;">${cat.name}</h4>
+      `;
+      btn.onclick = () => window.location.href = `/categories/?category=${cat.id}`;
+      ctn.appendChild(btn);
+    });
+  } catch (e) {
+    document.getElementById('homepage-categories').innerHTML = '<p class="muted">Erreur lors du chargement.</p>';
+  }
 }
-function openEvent(id){ window.location.href = `/events/${id}/`; }
+
+async function fetchEvents() {
+  try {
+    const res = await fetch('/api/events/?ordering=date');
+    const data = await res.json();
+    // Featured event
+    const featured = data && data.length > 0 ? data[0] : null;
+    const featuredDiv = document.getElementById('featured-event');
+    if (featured) {
+      const eventDate = new Date(featured.date);
+      const formattedDate = eventDate.toLocaleDateString('fr-TN', { day: 'numeric', month: 'long', year: 'numeric' });
+      const locationName = featured.location ? featured.location.name : 'Lieu à confirmer';
+      const price = featured.price ? `${featured.price} TND` : 'Gratuit';
+      featuredDiv.innerHTML = `
+        <div class="card" style="display:flex;align-items:center;gap:2rem;padding:1.5rem 1rem;box-shadow:0 2px 12px rgba(44,82,130,0.10);">
+          <img src="${featured.image || '/static/images/default-event.svg'}" alt="${featured.title}" style="width:120px;height:120px;object-fit:cover;border-radius:12px;">
+          <div style="flex:1;">
+            <h4 style="font-size:1.25rem;margin-bottom:0.5rem;">${featured.title}</h4>
+            <div style="color:#2c5282;font-weight:500;margin-bottom:0.5rem;">${formattedDate} &mdash; ${locationName}</div>
+            <div style="margin-bottom:0.5rem;">${featured.description ? featured.description.substring(0, 120) + '...' : ''}</div>
+            <div style="font-weight:600;color:#2c5282;font-size:1.125rem;">${price}</div>
+            <button onclick="openEvent(${featured.id})" class="btn-primary" style="margin-top:0.75rem;">Voir détails</button>
+          </div>
+        </div>
+      `;
+    } else {
+      featuredDiv.innerHTML = '<p class="muted">Aucun événement à la une.</p>';
+    }
+    // Upcoming events grid (skip featured)
+    const container = document.getElementById('events');
+    if (!data || data.length <= 1) {
+      container.innerHTML = '<p class="muted">Aucun événement disponible pour le moment.</p>';
+      return;
+    }
+    container.innerHTML = '';
+    const eventsToShow = data.slice(1, 13); // skip featured
+    eventsToShow.forEach(ev => {
+      const div = document.createElement('article');
+      div.className = 'card event-card';
+      const eventDate = new Date(ev.date);
+      const formattedDate = eventDate.toLocaleDateString('fr-TN', { day: 'numeric', month: 'long', year: 'numeric' });
+      const locationName = ev.location ? ev.location.name : 'Lieu à confirmer';
+      const categoryName = ev.category ? ev.category.name : 'Non catégorisé';
+      const price = ev.price ? `${ev.price} TND` : 'Gratuit';
+      const description = ev.description ? ev.description.substring(0, 100) + '...' : 'Pas de description disponible';
+      div.innerHTML = `
+        <img src="${ev.image || '/static/images/default-event.svg'}" alt="${ev.title}">
+        <div style="padding: 1rem;">
+          <div style="display: inline-block; background: rgba(44, 82, 130, 0.1); color: #2c5282; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 500; margin-bottom: 0.75rem;">
+            ${categoryName}
+          </div>
+          <h3>${ev.title}</h3>
+          <p class="event-meta">📅 ${formattedDate}</p>
+          <p class="event-meta">📍 ${locationName}</p>
+          <p class="muted" style="margin-top: 0.75rem;">${description}</p>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: space-between; align-items: center;">
+            <div style="font-weight: 600; color: #2c5282; font-size: 1.125rem;">${price}</div>
+            <button onclick="openEvent(${ev.id})" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+              Voir détails
+            </button>
+          </div>
+        </div>`;
+      container.appendChild(div);
+    });
+    // Add "See all events" link if there are more than 13 events
+    if (data.length > 13) {
+      const moreLink = document.createElement('div');
+      moreLink.style.cssText = 'text-align: center; margin-top: 2rem;';
+      moreLink.innerHTML = `<a href="/events/" class="btn-outline" style="padding: 0.75rem 2rem;">Voir tous les événements (${data.length})</a>`;
+      container.appendChild(moreLink);
+    }
+  } catch (error) {
+    document.getElementById('events').innerHTML = '<p class="muted">Erreur lors du chargement des événements.</p>';
+    document.getElementById('featured-event').innerHTML = '<p class="muted">Erreur lors du chargement de l\'événement à la une.</p>';
+  }
+}
+
+function openEvent(id){ 
+  window.location.href = `/events/${id}/`; 
+}
+
+fetchCategories();
 fetchEvents();
 </script>
 {% endblock %}
